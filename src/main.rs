@@ -16,10 +16,12 @@ async fn main() -> Result<()> {
     .await?;
 
     let start = Instant::now();
+    // let prompt = "Horse, in the style of Raden Saleh, Cedric Peyravernay, Peter Mohrbacher, george clausen, artgerm, mixed media on toned paper, 2021, very detailed, coffee art.";
+    let prompt = "Abdel Kader - Ahmed Alshaiba ft Mazen Samih, Ahmed Mounib, in the style of Raden Saleh, face symmetry, Wadim Kashin, artgerm, face symmetry, trending on artstation";
 
     let response = model
         .generate_image(
-            "Horse, in the style of Raden Saleh, Cedric Peyravernay, Peter Mohrbacher, george clausen, artgerm, mixed media on toned paper, 2021, very detailed, coffee art.".to_string(),
+            prompt.to_string(),
             ImageGenerationResponseFormat::Url,
             DiffusionGenerationParams::default(),
         )
