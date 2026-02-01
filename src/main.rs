@@ -18,7 +18,8 @@ async fn main() -> Result<()> {
     let start = Instant::now();
     // let prompt = "Horse, in the style of Raden Saleh, Cedric Peyravernay, Peter Mohrbacher, george clausen, artgerm, mixed media on toned paper, 2021, very detailed, coffee art.";
     // let prompt = "Abdel Kader - Ahmed Alshaiba ft Mazen Samih, Ahmed Mounib, in the style of Raden Saleh, face symmetry, Wadim Kashin, artgerm, face symmetry, trending on artstation";
-    let prompt = "Kelana, in the style of Raden Saleh, by Joao Ruas, by Artgerm";
+    // let prompt = "Kelana, in the style of Raden Saleh, by Joao Ruas, by Artgerm";
+    let prompt = "Detective Conan Main Theme (Katsuo Ohno, arr. by Seiji Miyagawa), in the style of Raden Saleh, trending on artstation, highly detailed";
 
     let response = model
         .generate_image(
