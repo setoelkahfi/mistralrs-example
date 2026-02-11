@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use anyhow::Result;
-use mistralrs::{IsqType, Model, RequestBuilder, TextMessageRole, TextModelBuilder};
+use mistralrs::{Model, ModelDType, RequestBuilder, TextMessageRole, TextModelBuilder};
 use std::time::Instant;
 
 const DEFAULT_MODEL: &str = "microsoft/Phi-3.5-mini-instruct";
@@ -31,7 +31,7 @@ impl PromptEnhancer {
     /// (e.g. Phi-3, Qwen2, Llama, Mistral).
     pub async fn with_model(model_id: &str) -> Result<Self> {
         let model = TextModelBuilder::new(model_id)
-            .with_isq(IsqType::Q4K)
+            .with_dtype(ModelDType::F16)
             .with_logging()
             .build()
             .await?;
