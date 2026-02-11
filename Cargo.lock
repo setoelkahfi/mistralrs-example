@@ -2836,8 +2836,6 @@ dependencies = [
 [[package]]
 name = "mistralrs"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b94ffe881c76d6531a334c729743db91a255267a097e9b20b52f66d8531296d1"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -2863,8 +2861,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-audio"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a78dd99327fca9c2c59ac8e5aa0a922db076645e4b46a1dbe6cfbb9fe11443b"
 dependencies = [
  "anyhow",
  "apodize",
@@ -2875,8 +2871,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-core"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44fb8dc16443f611d7611c377e3239cd4c41fa4fbbcebdbd40dc80549436b125"
 dependencies = [
  "ahash",
  "akin",
@@ -2972,8 +2966,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-macros"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c4805bae591126918a68c86cb541498ee64e4a584451127e6044643f2fafc1b"
 dependencies = [
  "darling 0.23.0",
  "proc-macro2",
@@ -2984,8 +2976,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-mcp"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e82edad2da585a3ea817684856b3ffd6d8da2a4996e829c767de2a77c83c1b8"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3005,8 +2995,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-paged-attn"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6000b390e4a7b56a58fc7005ac721780edd6fd28e70cb6a138872dd3c700dda"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -3021,8 +3009,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-quant"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fb9fb187f2c9397a73f2b00437f6bbedb4c556f1c06d13af2f8d35ec5543a00"
 dependencies = [
  "byteorder",
  "candle-core",
@@ -3052,6 +3038,7 @@ name = "mistralrs-test"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap",
  "mistralrs",
  "tokio",
 ]
@@ -3059,8 +3046,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-vision"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d79247946a50fdac4300e80504bc6950e298a9c2e7e1a2bcd948fe91852b8a7b"
 dependencies = [
  "candle-core",
  "image",

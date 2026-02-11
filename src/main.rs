@@ -1,41 +1,51 @@
 use anyhow::Result;
-use mistralrs::{
-    DiffusionGenerationParams, DiffusionLoaderType, DiffusionModelBuilder,
-    ImageGenerationResponseFormat,
-};
-use std::time::Instant;
+use clap::{Parser, Subcommand};
+
+mod image_generation;
+mod promp_enhancer;
+
+#[derive(Parser)]
+#[command(name = "mistralrs-example")]
+#[command(about = "mistral.rs examples — image generation & prompt enhancement")]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    /// Generate an image using a diffusion model (FLUX.1-schnell).
+    ///
+    /// Example:
+    ///   cargo run -- image
+    ///   cargo run -- image --prompt "A cat riding a bicycle on the moon"
+    Image {
+        /// The prompt to use for image generation.
+        /// If omitted a default prompt is used.
+        #[arg(short, long)]
+        prompt: Option<String>,
+    },
+
+    /// Enhance a short prompt into a detailed image-generation prompt
+    /// using a small instruction-following text model (Phi-3.5-mini).
+    ///
+    /// Example:
+    ///   cargo run -- prompt
+    ///   cargo run -- prompt --seed "A lonely astronaut, watercolor"
+    Prompt {
+        /// The seed prompt to enhance.
+        /// If omitted a default seed is used.
+        #[arg(short, long)]
+        seed: Option<String>,
+    },
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let model = DiffusionModelBuilder::new(
-        "black-forest-labs/FLUX.1-schnell",
-        DiffusionLoaderType::FluxOffloaded,
-    )
-    .with_logging()
-    .build()
-    .await?;
+    let cli = Cli::parse();
 
-    let start = Instant::now();
-    // let prompt = "Horse, in the style of Raden Saleh, Cedric Peyravernay, Peter Mohrbacher, george clausen, artgerm, mixed media on toned paper, 2021, very detailed, coffee art.";
-    // let prompt = "Abdel Kader - Ahmed Alshaiba ft Mazen Samih, Ahmed Mounib, in the style of Raden Saleh, face symmetry, Wadim Kashin, artgerm, face symmetry, trending on artstation";
-    // let prompt = "Kelana, in the style of Raden Saleh, by Joao Ruas, by Artgerm";
-    let prompt = "Detective Conan Main Theme (Katsuo Ohno, arr. by Seiji Miyagawa), in the style of Raden Saleh, trending on artstation, highly detailed";
-
-    let response = model
-        .generate_image(
-            prompt.to_string(),
-            ImageGenerationResponseFormat::Url,
-            DiffusionGenerationParams::default(),
-        )
-        .await?;
-
-    let finished = Instant::now();
-
-    println!(
-        "Done! Took {} s. Image saved at: {}",
-        finished.duration_since(start).as_secs_f32(),
-        response.data[0].url.as_ref().unwrap()
-    );
-
-    Ok(())
+    match cli.command {
+        Command::Image { prompt } => image_generation::run(prompt).await,
+        Command::Prompt { seed } => promp_enhancer::run(seed).await,
+    }
 }

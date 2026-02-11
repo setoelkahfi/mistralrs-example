@@ -18,7 +18,37 @@ It runs on [Metal](https://developer.apple.com/metal/)!
 
 ## How to run?
 
-Setup your Rust toolchain, change the `prompt` variable, run `cargo run`.
+Setup your Rust toolchain, then pick an example:
+
+### Image Generation
+
+Generate an image using FLUX.1-schnell (diffusion model):
+
+```bash
+# With default prompt
+cargo run -- image
+
+# With custom prompt
+cargo run -- image --prompt "A cat riding a bicycle on the moon, oil painting"
+```
+
+### Prompt Enhancer
+
+Expand a short description into a detailed image-generation prompt using Phi-3.5-mini:
+
+```bash
+# With default seed
+cargo run -- prompt
+
+# With custom seed
+cargo run -- prompt --seed "A lonely astronaut, watercolor"
+```
+
+### Help
+
+```bash
+cargo run -- --help
+```
 
 ## License
 
