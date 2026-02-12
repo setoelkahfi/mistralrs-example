@@ -2,7 +2,19 @@
 
 use anyhow::Result;
 use mistralrs::{Model, ModelDType, RequestBuilder, TextMessageRole, TextModelBuilder};
-use std::time::Instant;
+use std::time::{Duration, Instant};
+
+/// Format a `Duration` as `Xm Ys` (e.g. "2m 30.5s") or just `Ys` when under a minute.
+fn fmt_duration(d: Duration) -> String {
+    let total_secs = d.as_secs_f64();
+    let mins = (total_secs / 60.0).floor() as u64;
+    let secs = total_secs - (mins as f64 * 60.0);
+    if mins > 0 {
+        format!("{}m {:.1}s", mins, secs)
+    } else {
+        format!("{:.1}s", secs)
+    }
+}
 
 const DEFAULT_MODEL: &str = "microsoft/Phi-3.5-mini-instruct";
 
@@ -110,7 +122,7 @@ pub async fn run(prompt: Option<String>) -> Result<()> {
     let start = Instant::now();
     let enhancer = PromptEnhancer::new().await?;
     let load_elapsed = start.elapsed();
-    println!("Model loaded in {:.1}s", load_elapsed.as_secs_f32());
+    println!("Model loaded in {}", fmt_duration(load_elapsed));
 
     println!("\nSeed prompt:\n  \"{seed}\"\n");
 
@@ -118,7 +130,7 @@ pub async fn run(prompt: Option<String>) -> Result<()> {
     let enhanced = enhancer.enhance(&seed).await?;
     let enhance_elapsed = enhance_start.elapsed();
 
-    println!("Enhanced prompt ({:.1}s):", enhance_elapsed.as_secs_f32());
+    println!("Enhanced prompt ({}):", fmt_duration(enhance_elapsed));
     println!("  \"{enhanced}\"");
 
     Ok(())
