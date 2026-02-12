@@ -6,15 +6,15 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 clap = { version = "4", features = ["derive"] }
-mistralrs = { path = "../../Repositories/mistral.rs/mistralrs" }
+mistralrs = { version = "0.7" }
 tokio = "1.49.0"
 
 # Enable Metal (Apple GPU) only on Apple platforms (macOS, iOS).
 [target.'cfg(target_os = "macos")'.dependencies]
-mistralrs = { path = "../../Repositories/mistral.rs/mistralrs", features = ["metal"] }
+mistralrs = { version = "0.7", features = ["metal"] }
 
 [target.'cfg(target_os = "ios")'.dependencies]
-mistralrs = { path = "../../Repositories/mistral.rs/mistralrs", features = ["metal"] }
+mistralrs = { version = "0.7", features = ["metal"] }
 
 # Enable CUDA on Linux (activate by building with --features cuda).
 [features]

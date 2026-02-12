@@ -1008,25 +1008,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cudaforge"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ac9cd50bed6f024583322f1a5b8027eabef203086ccceb27aac1b0b58515a32"
-dependencies = [
- "anyhow",
- "fs2",
- "glob",
- "num_cpus",
- "rayon",
- "serde",
- "serde_json",
- "sha2",
- "thiserror 2.0.18",
- "walkdir",
- "which",
-]
-
-[[package]]
 name = "cudarc"
 version = "0.17.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1480,12 +1461,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "env_home"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7f84e12ccf0a7ddc17a6c41c93326024c42920d7ee630d04950e6926645c0fe"
-
-[[package]]
 name = "equator"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1706,16 +1681,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
 dependencies = [
  "percent-encoding",
-]
-
-[[package]]
-name = "fs2"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
-dependencies = [
- "libc",
- "winapi",
 ]
 
 [[package]]
@@ -3080,6 +3045,8 @@ dependencies = [
 [[package]]
 name = "mistralrs"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b94ffe881c76d6531a334c729743db91a255267a097e9b20b52f66d8531296d1"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -3105,6 +3072,8 @@ dependencies = [
 [[package]]
 name = "mistralrs-audio"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a78dd99327fca9c2c59ac8e5aa0a922db076645e4b46a1dbe6cfbb9fe11443b"
 dependencies = [
  "anyhow",
  "apodize",
@@ -3115,6 +3084,8 @@ dependencies = [
 [[package]]
 name = "mistralrs-core"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44fb8dc16443f611d7611c377e3239cd4c41fa4fbbcebdbd40dc80549436b125"
 dependencies = [
  "ahash",
  "akin",
@@ -3123,6 +3094,7 @@ dependencies = [
  "as-any",
  "async-trait",
  "base64 0.22.1",
+ "bindgen_cuda",
  "bm25",
  "bytemuck",
  "bytemuck_derive",
@@ -3134,7 +3106,6 @@ dependencies = [
  "chrono",
  "clap",
  "csv",
- "cudaforge",
  "derive-new",
  "derive_more",
  "dirs",
@@ -3212,6 +3183,8 @@ dependencies = [
 [[package]]
 name = "mistralrs-macros"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c4805bae591126918a68c86cb541498ee64e4a584451127e6044643f2fafc1b"
 dependencies = [
  "darling 0.23.0",
  "proc-macro2",
@@ -3222,6 +3195,8 @@ dependencies = [
 [[package]]
 name = "mistralrs-mcp"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e82edad2da585a3ea817684856b3ffd6d8da2a4996e829c767de2a77c83c1b8"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3241,11 +3216,13 @@ dependencies = [
 [[package]]
 name = "mistralrs-paged-attn"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6000b390e4a7b56a58fc7005ac721780edd6fd28e70cb6a138872dd3c700dda"
 dependencies = [
  "anyhow",
+ "bindgen_cuda",
  "candle-core",
  "candle-metal-kernels",
- "cudaforge",
  "float8 0.6.0",
  "half",
  "objc2-foundation",
@@ -3256,12 +3233,14 @@ dependencies = [
 [[package]]
 name = "mistralrs-quant"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fb9fb187f2c9397a73f2b00437f6bbedb4c556f1c06d13af2f8d35ec5543a00"
 dependencies = [
+ "bindgen_cuda",
  "byteorder",
  "candle-core",
  "candle-metal-kernels",
  "candle-nn",
- "cudaforge",
  "float8 0.6.0",
  "half",
  "hf-hub",
@@ -3295,6 +3274,8 @@ dependencies = [
 [[package]]
 name = "mistralrs-vision"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d79247946a50fdac4300e80504bc6950e298a9c2e7e1a2bcd948fe91852b8a7b"
 dependencies = [
  "candle-core",
  "image",
@@ -6449,18 +6430,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a28ac98ddc8b9274cb41bb4d9d4d5c425b6020c50c46f25559911905610b4a88"
 
 [[package]]
-name = "which"
-version = "7.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24d643ce3fd3e5b54854602a080f34fb10ab75e0b813ee32d00ca2b44fa74762"
-dependencies = [
- "either",
- "env_home",
- "rustix",
- "winsafe",
-]
-
-[[package]]
 name = "wide"
 version = "0.7.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6971,12 +6940,6 @@ checksum = "5a5364e9d77fcdeeaa6062ced926ee3381faa2ee02d3eb83a5c27a8825540829"
 dependencies = [
  "memchr",
 ]
-
-[[package]]
-name = "winsafe"
-version = "0.0.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 
 [[package]]
 name = "wit-bindgen"
