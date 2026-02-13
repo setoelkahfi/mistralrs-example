@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 
 use anyhow::Result;
-use mistralrs::{IsqType, Model, ModelDType, RequestBuilder, TextMessageRole, TextModelBuilder};
+use mistralrs::{
+    IsqType, Model, ModelDType, RequestBuilder, TextMessageRole, TextModelBuilder,
+    VisionModelBuilder,
+};
 use std::fmt;
 use std::time::{Duration, Instant};
 
@@ -55,22 +58,44 @@ impl EnhancerModel {
         }
     }
 
-    /// Build a [`TextModelBuilder`] with the optimal dtype / ISQ settings for
-    /// this preset.
-    fn configure_builder(self) -> TextModelBuilder {
-        let builder = TextModelBuilder::new(self.model_id()).with_logging();
-
+    /// Build the [`Model`] with the optimal dtype / ISQ settings for this
+    /// preset.
+    ///
+    /// Gemma 3n uses `Gemma3nForConditionalGeneration` (a multimodal
+    /// architecture), so mistral.rs classifies it as a **vision** model even
+    /// when used for text-only chat.  We therefore load it via
+    /// [`VisionModelBuilder`].  Phi-3.5-mini is a pure text model and uses
+    /// [`TextModelBuilder`] as usual.
+    async fn build_model(self) -> Result<Model> {
         match self {
             // E2B is the "on-device" pick — quantise aggressively to fit in
             // iPhone memory alongside the diffusion model.
-            Self::GemmaE2b => builder.with_dtype(ModelDType::Auto).with_isq(IsqType::Q4K),
+            Self::GemmaE2b => {
+                VisionModelBuilder::new(self.model_id())
+                    .with_isq(IsqType::Q4K)
+                    .with_logging()
+                    .build()
+                    .await
+            }
 
             // E4B in full F16 — the sweet spot on a Mac with ≥16 GB RAM.
-            Self::GemmaE4b => builder.with_dtype(ModelDType::F16),
+            Self::GemmaE4b => {
+                VisionModelBuilder::new(self.model_id())
+                    .with_dtype(ModelDType::F16)
+                    .with_logging()
+                    .build()
+                    .await
+            }
 
             // Phi-3.5-mini at 3.8 B params is too large for F16 on most
             // laptops, so default to Q4K like the upstream examples.
-            Self::Phi35Mini => builder.with_dtype(ModelDType::Auto).with_isq(IsqType::Q4K),
+            Self::Phi35Mini => {
+                TextModelBuilder::new(self.model_id())
+                    .with_isq(IsqType::Q4K)
+                    .with_logging()
+                    .build()
+                    .await
+            }
         }
     }
 }
@@ -131,8 +156,12 @@ impl PromptEnhancer {
     /// Build a `PromptEnhancer` from one of the built-in [`EnhancerModel`]
     /// presets.  Each preset applies the optimal dtype / ISQ configuration
     /// automatically.
+    ///
+    /// Gemma 3n variants are loaded via [`VisionModelBuilder`] (the model
+    /// architecture is multimodal), while Phi-3.5-mini uses
+    /// [`TextModelBuilder`].  Both return the same [`Model`] type.
     pub async fn from_preset(preset: EnhancerModel) -> Result<Self> {
-        let model = preset.configure_builder().build().await?;
+        let model = preset.build_model().await?;
 
         Ok(Self {
             model,
