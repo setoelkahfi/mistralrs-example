@@ -24,14 +24,14 @@ const DEFAULT_LOADER: DiffusionLoaderType = DiffusionLoaderType::FluxOffloaded;
 pub async fn run(prompt: Option<String>) -> Result<()> {
     let prompt = prompt.unwrap_or_else(|| {
         "A majestic castle on a cliff overlooking the sea at sunset, \
-         highly detailed, digital painting, trending on artstation, in style of Raden Saleh"
+         highly detailed, digital painting, trending on artstation, in the style of Raden Saleh"
             .to_string()
     });
 
     println!("Loading diffusion model ({DEFAULT_MODEL})...");
     let load_start = Instant::now();
     let model = DiffusionModelBuilder::new(DEFAULT_MODEL, DEFAULT_LOADER)
-        .with_dtype(ModelDType::F16)
+        .with_dtype(ModelDType::BF16)
         .with_logging()
         .build()
         .await?;
