@@ -1,7 +1,7 @@
 use anyhow::Result;
 use mistralrs::{
     DiffusionGenerationParams, DiffusionLoaderType, DiffusionModelBuilder,
-    ImageGenerationResponseFormat,
+    ImageGenerationResponseFormat, ModelDType,
 };
 use std::time::{Duration, Instant};
 
@@ -29,12 +29,16 @@ pub async fn run(prompt: Option<String>) -> Result<()> {
     });
 
     println!("Loading diffusion model ({DEFAULT_MODEL})...");
+    let load_start = Instant::now();
     let model = DiffusionModelBuilder::new(DEFAULT_MODEL, DEFAULT_LOADER)
+        .with_dtype(ModelDType::F16)
         .with_logging()
         .build()
         .await?;
+    let load_elapsed = load_start.elapsed();
+    println!("Model loaded in {}", fmt_duration(load_elapsed));
 
-    println!("Generating image for prompt:\n  \"{prompt}\"");
+    println!("\nGenerating image for prompt:\n  \"{prompt}\"");
 
     let start = Instant::now();
     let response = model
