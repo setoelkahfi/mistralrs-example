@@ -1,0 +1,78 @@
+name: Build Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  check:
+    name: Check (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── macOS (native) ──────────────────────────────────
+          - target: aarch64-apple-darwin
+            runner: macos-latest # Apple Silicon (M-series)
+            extra_rustflags: ""
+
+          - target: x86_64-apple-darwin
+            runner: macos-13 # Last Intel macOS runner
+            extra_rustflags: ""
+
+          # ── iOS (cross-compile from macOS ARM) ──────────────
+          # +fp16 is required by gemm-f16 and must match .cargo/config.toml.
+          # We set RUSTFLAGS explicitly here because the env var takes
+          # precedence over [target.*.rustflags] in config.toml.
+          - target: aarch64-apple-ios
+            runner: macos-latest
+            extra_rustflags: "-C target-feature=+fp16"
+
+          - target: aarch64-apple-ios-sim
+            runner: macos-latest
+            extra_rustflags: "-C target-feature=+fp16"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Run cargo check
+        env:
+          RUSTFLAGS: "-D warnings ${{ matrix.extra_rustflags }}"
+        run: cargo check --target ${{ matrix.target }}
+
+  # ── Summary gate (single required status check) ─────────────
+  build-check-ok:
+    name: Build Check OK
+    if: always()
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all matrix jobs succeeded
+        run: |
+          if [[ "${{ needs.check.result }}" != "success" ]]; then
+            echo "::error::One or more check jobs failed or were cancelled."
+            exit 1
+          fi
+          echo "All check jobs passed."
