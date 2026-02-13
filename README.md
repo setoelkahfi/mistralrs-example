@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./image-generation-f0ae58f2-7a20-43b3-9da7-e6c24fe9aa00.png" alt="mistral.rs" width="100%" style="max-width: 800px;">
+  <img src="./docs/images/image-generation-f0ae58f2-7a20-43b3-9da7-e6c24fe9aa00.png" alt="mistral.rs" width="100%" style="max-width: 800px;">
 </div>
 
 <h3 align="center">
@@ -11,38 +11,6 @@ Fast, flexible LLM inference.
 <p align="center">
   | <a href="https://ericlbuehler.github.io/mistral.rs/"><b>mistral.rs</b></a> | <a href="https://music.youtube.com/watch?v=zxMPvlDuyG8&si=YYaFuVOX1bAu9FdW"><b>Horse</b></a> | <a href="https://reimagenai.5mb.app/artwork/45"><b>Horse, Reimagined</b></a>  |
 </p>
-
-## Why mistral.rs?
-
-It runs on [Metal](https://developer.apple.com/metal/)!
-
-## How to run?
-
-Setup your Rust toolchain, then pick an example:
-
-### Image Generation
-
-Generate an image using FLUX.1-schnell (diffusion model):
-
-```bash
-# With default prompt
-cargo run -- image
-
-# With custom prompt
-cargo run -- image --prompt "A cat riding a bicycle on the moon, oil painting"
-```
-
-### Prompt Enhancer
-
-Expand a short description into a detailed image-generation prompt using Phi-3.5-mini:
-
-```bash
-# With default seed
-cargo run -- prompt
-
-# With custom seed
-cargo run -- prompt --seed "A lonely astronaut, watercolor"
-```
 
 ### Help
 
