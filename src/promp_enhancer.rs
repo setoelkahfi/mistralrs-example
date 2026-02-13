@@ -18,7 +18,17 @@ fn fmt_duration(d: Duration) -> String {
 
 const DEFAULT_MODEL: &str = "microsoft/Phi-3.5-mini-instruct";
 
-const SYSTEM_PROMPT: &str = r#"You are a prompt enhancer for image generation models. Given a short description, expand it into a detailed, vivid, and creative image generation prompt. Keep the artistic style references if provided. Add details about lighting, composition, medium, and atmosphere. Output ONLY the enhanced prompt text, nothing else. Do not include any explanation, preamble, or quotes."#;
+/// CLIP (used by FLUX.1-schnell) has a hard limit of 77 tokens (including
+/// BOS/EOS), so the enhanced prompt must stay under ~50 words to be safe.
+const SYSTEM_PROMPT: &str = r#"You are a prompt enhancer for image generation models. Given a short description, expand it into a vivid image generation prompt. Keep artistic style references if provided. Add lighting, composition, and atmosphere details. The result MUST be under 50 words. Output ONLY the enhanced prompt, no explanation, no quotes."#;
+
+/// Maximum number of CLIP tokens the diffusion model accepts (including BOS/EOS).
+const MAX_CLIP_TOKENS: usize = 77;
+
+/// Conservative word-count ceiling so the prompt fits within [`MAX_CLIP_TOKENS`].
+/// CLIP roughly tokenises at the word level; 50 words ≈ 55-65 CLIP tokens,
+/// leaving headroom for BOS/EOS and occasional sub-word splits.
+const MAX_PROMPT_WORDS: usize = 50;
 
 /// A self-contained prompt enhancer that owns a text generation model.
 ///
@@ -68,7 +78,9 @@ impl PromptEnhancer {
         let request = RequestBuilder::new()
             .set_sampler_temperature(0.9)
             .set_sampler_topp(0.95)
-            .set_sampler_max_len(150)
+            // Keep generation short so the result fits within CLIP's 77-token
+            // window after tokenisation.
+            .set_sampler_max_len(80)
             .add_message(TextMessageRole::System, &self.system_prompt)
             .add_message(TextMessageRole::User, seed_prompt);
 
@@ -83,9 +95,9 @@ impl PromptEnhancer {
 
         // Fallback to the seed prompt if the model returned something too short
         if enhanced.len() <= seed_prompt.len() + 4 {
-            Ok(seed_prompt.to_string())
+            Ok(truncate_to_words(seed_prompt, MAX_PROMPT_WORDS))
         } else {
-            Ok(enhanced)
+            Ok(truncate_to_words(&enhanced, MAX_PROMPT_WORDS))
         }
     }
 
@@ -106,6 +118,17 @@ impl PromptEnhancer {
     pub fn model(&self) -> &Model {
         &self.model
     }
+}
+
+/// Truncate `text` to at most `max_words` whitespace-separated words.
+///
+/// This is a safety net so that prompts never exceed CLIP's 77-token limit.
+fn truncate_to_words(text: &str, max_words: usize) -> String {
+    let words: Vec<&str> = text.split_whitespace().collect();
+    if words.len() <= max_words {
+        return text.to_string();
+    }
+    words[..max_words].join(" ")
 }
 
 /// Run the prompt enhancer as a standalone example.
