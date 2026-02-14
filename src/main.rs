@@ -1,14 +1,19 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
+mod audio_transcription;
 mod image_generation;
 mod promp_enhancer;
 
+use audio_transcription::TranscriptionModel;
 use promp_enhancer::EnhancerModel;
 
 #[derive(Parser)]
 #[command(name = "mistralrs-example")]
-#[command(about = "mistral.rs examples — image generation & prompt enhancement")]
+#[command(
+    about = "mistral.rs examples — image generation, prompt enhancement & audio transcription"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -73,6 +78,37 @@ enum Command {
         #[arg(short, long, value_enum)]
         model: Option<EnhancerModel>,
     },
+
+    /// Transcribe audio using Gemma 3n's conformer audio encoder.
+    ///
+    /// Designed for vocal stems from demucs or similar source-separation
+    /// tools.  Gemma 3n's 128-bin mel spectrogram provides high spectral
+    /// resolution that handles separation artefacts well.
+    ///
+    /// Supports WAV, MP3, OGG, FLAC — any format symphonia can decode.
+    ///
+    /// Examples:
+    ///   cargo run -- transcribe vocals.wav
+    ///   cargo run -- transcribe separated/vocals.wav --model gemma-e2b
+    ///   cargo run -- transcribe song.mp3 --user-prompt "Transcribe the singing lyrics"
+    Transcribe {
+        /// Path to the audio file to transcribe.
+        #[arg(value_name = "AUDIO_FILE")]
+        audio_path: PathBuf,
+
+        /// Which Gemma 3n variant to use.
+        ///
+        /// Possible values:
+        ///   gemma-e2b — Gemma 3n E2B, smallest (~1.5 GB Q4K), fastest
+        ///   gemma-e4b — Gemma 3n E4B, balanced (~8 GB F16) [default]
+        #[arg(short, long, value_enum)]
+        model: Option<TranscriptionModel>,
+
+        /// Custom instruction to send alongside the audio.
+        /// If omitted, a default transcription prompt is used.
+        #[arg(short, long)]
+        user_prompt: Option<String>,
+    },
 }
 
 #[tokio::main]
@@ -86,5 +122,10 @@ async fn main() -> Result<()> {
             model,
         } => image_generation::run(prompt, seed, model).await,
         Command::Prompt { seed, model } => promp_enhancer::run(seed, model).await,
+        Command::Transcribe {
+            audio_path,
+            model,
+            user_prompt,
+        } => audio_transcription::run(audio_path, model, user_prompt).await,
     }
 }
