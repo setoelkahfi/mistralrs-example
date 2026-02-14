@@ -27,10 +27,6 @@ jobs:
             runner: macos-latest # Apple Silicon (M-series)
             extra_rustflags: ""
 
-          - target: x86_64-apple-darwin
-            runner: macos-13 # Last Intel macOS runner
-            extra_rustflags: ""
-
           # ── iOS (cross-compile from macOS ARM) ──────────────
           # +fp16 is required by gemm-f16 and must match .cargo/config.toml.
           # We set RUSTFLAGS explicitly here because the env var takes
