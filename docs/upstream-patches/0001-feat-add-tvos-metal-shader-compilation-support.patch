@@ -1,0 +1,179 @@
+From 95e85e3666f158f77c6756b2172054725a035e88 Mon Sep 17 00:00:00 2001
+From: Seto <setoelkahfi@gmail.com>
+Date: Sat, 14 Feb 2026 10:54:40 +0100
+Subject: [PATCH] feat: add tvOS Metal shader compilation support
+
+Add tvOS (appletvos SDK) as a compilation target for precompiled Metal
+shader libraries in both mistralrs-quant and mistralrs-paged-attn.
+
+Previously, the Metal build scripts only compiled .metallib files for
+macOS (macosx SDK) and iOS (iphoneos SDK). When the metal feature was
+enabled for a tvOS target, the KERNELS constant was undefined because
+no #[cfg(target_os = "tvos")] variant existed, causing a build failure
+with missing symbols.
+
+Changes:
+- Add Platform::TvOS variant mapped to the 'appletvos' xcrun SDK
+- Produce mistralrs_quant_tvos.metallib and
+  mistralrs_paged_attention_tvos.metallib alongside the existing
+  macOS/iOS metallibs
+- Write dummy tvOS metallib files when MISTRALRS_METAL_PRECOMPILE=0
+- Add #[cfg(target_os = "tvos")] KERNELS constants that include the
+  tvOS-specific metallib bytes
+
+This enables building mistralrs with --features metal for
+aarch64-apple-tvos and aarch64-apple-tvos-sim targets (Apple TV 4K
+3rd gen with A15+ supports Metal 3.1).
+---
+ mistralrs-paged-attn/build.rs                 | 13 ++++++++++---
+ mistralrs-paged-attn/src/metal/kernels/mod.rs |  5 +++++
+ mistralrs-quant/build.rs                      | 13 ++++++++++---
+ mistralrs-quant/src/metal_kernels/mod.rs      |  2 ++
+ 4 files changed, 27 insertions(+), 6 deletions(-)
+
+diff --git a/mistralrs-paged-attn/build.rs b/mistralrs-paged-attn/build.rs
+index b7e1c677..3ac41e9a 100644
+--- a/mistralrs-paged-attn/build.rs
++++ b/mistralrs-paged-attn/build.rs
+@@ -126,12 +126,14 @@ fn main() -> Result<(), String> {
+         let out_dir = PathBuf::from(std::env::var("OUT_DIR").map_err(|_| "OUT_DIR not set")?);
+         std::fs::write(out_dir.join("mistralrs_paged_attention.metallib"), []).unwrap();
+         std::fs::write(out_dir.join("mistralrs_paged_attention_ios.metallib"), []).unwrap();
++        std::fs::write(out_dir.join("mistralrs_paged_attention_tvos.metallib"), []).unwrap();
+         return Ok(());
+     }
+ 
+     enum Platform {
+         MacOS,
+         Ios,
++        TvOS,
+     }
+ 
+     impl Platform {
+@@ -139,15 +141,18 @@ fn main() -> Result<(), String> {
+             match self {
+                 Platform::MacOS => "macosx",
+                 Platform::Ios => "iphoneos",
++                Platform::TvOS => "appletvos",
+             }
+         }
+ 
+         fn metal_std(&self) -> &str {
+-            // Use Metal 3.0 unified standard for both platforms
+-            // This fixes Xcode 26+ where the default Metal standard may be too low
++            // Use Metal 3.0 unified standard for all platforms.
++            // This fixes Xcode 26+ where the default Metal standard may be too low.
+             // https://github.com/EricLBuehler/mistral.rs/issues/1844
++            //
++            // Note: tvOS devices with A15+ (Apple TV 4K 3rd gen) support Metal 3.0+.
+             match self {
+-                Platform::MacOS | Platform::Ios => "metal3.0",
++                Platform::MacOS | Platform::Ios | Platform::TvOS => "metal3.0",
+             }
+         }
+     }
+@@ -205,6 +210,7 @@ fn main() -> Result<(), String> {
+         let lib_name = match platform {
+             Platform::MacOS => "mistralrs_paged_attention.metallib",
+             Platform::Ios => "mistralrs_paged_attention_ios.metallib",
++            Platform::TvOS => "mistralrs_paged_attention_tvos.metallib",
+         };
+         let metallib = out_dir.join(lib_name);
+         let mut compile_metallib_cmd = Command::new("xcrun");
+@@ -242,6 +248,7 @@ fn main() -> Result<(), String> {
+ 
+     compile(Platform::MacOS)?;
+     compile(Platform::Ios)?;
++    compile(Platform::TvOS)?;
+ 
+     Ok(())
+ }
+diff --git a/mistralrs-paged-attn/src/metal/kernels/mod.rs b/mistralrs-paged-attn/src/metal/kernels/mod.rs
+index a345fb34..a2140f1b 100644
+--- a/mistralrs-paged-attn/src/metal/kernels/mod.rs
++++ b/mistralrs-paged-attn/src/metal/kernels/mod.rs
+@@ -26,6 +26,11 @@ const KERNELS: &[u8] = include_bytes!(concat!(
+     env!("OUT_DIR"),
+     "/mistralrs_paged_attention_ios.metallib"
+ ));
++#[cfg(target_os = "tvos")]
++const KERNELS: &[u8] = include_bytes!(concat!(
++    env!("OUT_DIR"),
++    "/mistralrs_paged_attention_tvos.metallib"
++));
+ 
+ #[derive(thiserror::Error, Debug)]
+ pub enum MetalKernelError {
+diff --git a/mistralrs-quant/build.rs b/mistralrs-quant/build.rs
+index 51c22760..0add4119 100644
+--- a/mistralrs-quant/build.rs
++++ b/mistralrs-quant/build.rs
+@@ -188,12 +188,14 @@ fn main() -> Result<(), String> {
+             let out_dir = PathBuf::from(std::env::var("OUT_DIR").map_err(|_| "OUT_DIR not set")?);
+             std::fs::write(out_dir.join("mistralrs_quant.metallib"), []).unwrap();
+             std::fs::write(out_dir.join("mistralrs_quant_ios.metallib"), []).unwrap();
++            std::fs::write(out_dir.join("mistralrs_quant_tvos.metallib"), []).unwrap();
+             return Ok(());
+         }
+ 
+         enum Platform {
+             MacOS,
+             Ios,
++            TvOS,
+         }
+ 
+         impl Platform {
+@@ -201,15 +203,18 @@ fn main() -> Result<(), String> {
+                 match self {
+                     Platform::MacOS => "macosx",
+                     Platform::Ios => "iphoneos",
++                    Platform::TvOS => "appletvos",
+                 }
+             }
+ 
+             fn metal_std(&self) -> &str {
+-                // Use Metal 3.1 unified standard for both platforms
+-                // This fixes Xcode 26+ where the default Metal standard may be too low
++                // Use Metal 3.1 unified standard for all platforms.
++                // This fixes Xcode 26+ where the default Metal standard may be too low.
+                 // https://github.com/EricLBuehler/mistral.rs/issues/1844
++                //
++                // Note: tvOS devices with A15+ (Apple TV 4K 3rd gen) support Metal 3.1.
+                 match self {
+-                    Platform::MacOS | Platform::Ios => "metal3.1",
++                    Platform::MacOS | Platform::Ios | Platform::TvOS => "metal3.1",
+                 }
+             }
+         }
+@@ -268,6 +273,7 @@ fn main() -> Result<(), String> {
+             let lib_name = match platform {
+                 Platform::MacOS => "mistralrs_quant.metallib",
+                 Platform::Ios => "mistralrs_quant_ios.metallib",
++                Platform::TvOS => "mistralrs_quant_tvos.metallib",
+             };
+             let metallib = out_dir.join(lib_name);
+             let mut compile_metallib_cmd = Command::new("xcrun");
+@@ -306,6 +312,7 @@ fn main() -> Result<(), String> {
+ 
+         compile(Platform::MacOS)?;
+         compile(Platform::Ios)?;
++        compile(Platform::TvOS)?;
+ 
+         Ok(())
+     }
+diff --git a/mistralrs-quant/src/metal_kernels/mod.rs b/mistralrs-quant/src/metal_kernels/mod.rs
+index 6bc977b4..40be7157 100644
+--- a/mistralrs-quant/src/metal_kernels/mod.rs
++++ b/mistralrs-quant/src/metal_kernels/mod.rs
+@@ -23,6 +23,8 @@ type ComputePipelineState = ComputePipeline;
+ const KERNELS: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/mistralrs_quant.metallib"));
+ #[cfg(target_os = "ios")]
+ const KERNELS: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/mistralrs_quant_ios.metallib"));
++#[cfg(target_os = "tvos")]
++const KERNELS: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/mistralrs_quant_tvos.metallib"));
+ 
+ #[derive(thiserror::Error, Debug)]
+ pub enum MetalKernelError {
+-- 
+2.50.1 (Apple Git-155)
+
