@@ -1,22 +1,112 @@
 #![allow(dead_code)]
 
 use anyhow::Result;
-use mistralrs::{Model, ModelDType, RequestBuilder, TextMessageRole, TextModelBuilder};
+use mistralrs::{
+    IsqType, Model, ModelDType, RequestBuilder, TextMessageRole, TextModelBuilder,
+    VisionModelBuilder,
+};
+use std::fmt;
 use std::time::{Duration, Instant};
 
-/// Format a `Duration` as `Xm Ys` (e.g. "2m 30.5s") or just `Ys` when under a minute.
-fn fmt_duration(d: Duration) -> String {
-    let total_secs = d.as_secs_f64();
-    let mins = (total_secs / 60.0).floor() as u64;
-    let secs = total_secs - (mins as f64 * 60.0);
-    if mins > 0 {
-        format!("{}m {:.1}s", mins, secs)
-    } else {
-        format!("{:.1}s", secs)
+// ── Model presets ────────────────────────────────────────────────────────────
+
+/// Available prompt-enhancer model presets.
+///
+/// Each variant carries the HuggingFace model ID and the optimal loading
+/// strategy (dtype / in-situ quantization) for its size class.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, clap::ValueEnum)]
+pub enum EnhancerModel {
+    /// Gemma 3n E2B — smallest, best for iPhone / on-device (~1.5 GB with Q4K).
+    #[value(name = "gemma-e2b")]
+    GemmaE2b,
+
+    /// Gemma 3n E4B — balanced quality & size for macOS desktop (F16).
+    #[default]
+    #[value(name = "gemma-e4b")]
+    GemmaE4b,
+
+    /// Phi-3.5-mini — strongest quality, larger memory footprint (~2.8 GB with Q4K).
+    #[value(name = "phi-3.5-mini")]
+    Phi35Mini,
+}
+
+impl EnhancerModel {
+    /// HuggingFace model identifier.
+    pub fn model_id(self) -> &'static str {
+        match self {
+            Self::GemmaE2b => "google/gemma-3n-E2B-it",
+            Self::GemmaE4b => "google/gemma-3n-E4B-it",
+            Self::Phi35Mini => "microsoft/Phi-3.5-mini-instruct",
+        }
+    }
+
+    /// Human-readable label used in log messages.
+    pub fn display_name(self) -> &'static str {
+        match self {
+            Self::GemmaE2b => "Gemma 3n E2B",
+            Self::GemmaE4b => "Gemma 3n E4B",
+            Self::Phi35Mini => "Phi-3.5-mini",
+        }
+    }
+
+    /// Approximate memory footprint with the chosen loading strategy.
+    pub fn approx_memory(self) -> &'static str {
+        match self {
+            Self::GemmaE2b => "~1.5 GB (Q4K)",
+            Self::GemmaE4b => "~8 GB (F16)",
+            Self::Phi35Mini => "~2.8 GB (Q4K)",
+        }
+    }
+
+    /// Build the [`Model`] with the optimal dtype / ISQ settings for this
+    /// preset.
+    ///
+    /// Gemma 3n uses `Gemma3nForConditionalGeneration` (a multimodal
+    /// architecture), so mistral.rs classifies it as a **vision** model even
+    /// when used for text-only chat.  We therefore load it via
+    /// [`VisionModelBuilder`].  Phi-3.5-mini is a pure text model and uses
+    /// [`TextModelBuilder`] as usual.
+    async fn build_model(self) -> Result<Model> {
+        match self {
+            // E2B is the "on-device" pick — quantise aggressively to fit in
+            // iPhone memory alongside the diffusion model.
+            Self::GemmaE2b => {
+                VisionModelBuilder::new(self.model_id())
+                    .with_isq(IsqType::Q4K)
+                    .with_logging()
+                    .build()
+                    .await
+            }
+
+            // E4B in full F16 — the sweet spot on a Mac with ≥16 GB RAM.
+            Self::GemmaE4b => {
+                VisionModelBuilder::new(self.model_id())
+                    .with_dtype(ModelDType::F16)
+                    .with_logging()
+                    .build()
+                    .await
+            }
+
+            // Phi-3.5-mini at 3.8 B params is too large for F16 on most
+            // laptops, so default to Q4K like the upstream examples.
+            Self::Phi35Mini => {
+                TextModelBuilder::new(self.model_id())
+                    .with_isq(IsqType::Q4K)
+                    .with_logging()
+                    .build()
+                    .await
+            }
+        }
     }
 }
 
-const DEFAULT_MODEL: &str = "microsoft/Phi-3.5-mini-instruct";
+impl fmt::Display for EnhancerModel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} ({})", self.display_name(), self.model_id())
+    }
+}
+
+// ── Constants ────────────────────────────────────────────────────────────────
 
 /// CLIP (used by FLUX.1-schnell) has a hard limit of 77 tokens (including
 /// BOS/EOS), so the enhanced prompt must stay under ~50 words to be safe.
@@ -30,6 +120,22 @@ const MAX_CLIP_TOKENS: usize = 77;
 /// leaving headroom for BOS/EOS and occasional sub-word splits.
 const MAX_PROMPT_WORDS: usize = 50;
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/// Format a `Duration` as `Xm Ys` (e.g. "2m 30.5s") or just `Ys` when under a minute.
+fn fmt_duration(d: Duration) -> String {
+    let total_secs = d.as_secs_f64();
+    let mins = (total_secs / 60.0).floor() as u64;
+    let secs = total_secs - (mins as f64 * 60.0);
+    if mins > 0 {
+        format!("{}m {:.1}s", mins, secs)
+    } else {
+        format!("{:.1}s", secs)
+    }
+}
+
+// ── PromptEnhancer ───────────────────────────────────────────────────────────
+
 /// A self-contained prompt enhancer that owns a text generation model.
 ///
 /// Replicates the behavior of `Gustavosta/MagicPrompt-Stable-Diffusion` (a GPT-2
@@ -41,16 +147,33 @@ pub struct PromptEnhancer {
 }
 
 impl PromptEnhancer {
-    /// Build a new `PromptEnhancer` using the default model (`microsoft/Phi-3.5-mini-instruct`)
-    /// with Q4K in-situ quantization.
+    /// Build a new `PromptEnhancer` using the **default** preset
+    /// ([`EnhancerModel::GemmaE4b`]).
     pub async fn new() -> Result<Self> {
-        Self::with_model(DEFAULT_MODEL).await
+        Self::from_preset(EnhancerModel::default()).await
     }
 
-    /// Build a `PromptEnhancer` with a specific HuggingFace model ID.
+    /// Build a `PromptEnhancer` from one of the built-in [`EnhancerModel`]
+    /// presets.  Each preset applies the optimal dtype / ISQ configuration
+    /// automatically.
+    ///
+    /// Gemma 3n variants are loaded via [`VisionModelBuilder`] (the model
+    /// architecture is multimodal), while Phi-3.5-mini uses
+    /// [`TextModelBuilder`].  Both return the same [`Model`] type.
+    pub async fn from_preset(preset: EnhancerModel) -> Result<Self> {
+        let model = preset.build_model().await?;
+
+        Ok(Self {
+            model,
+            system_prompt: SYSTEM_PROMPT.to_string(),
+        })
+    }
+
+    /// Build a `PromptEnhancer` with an arbitrary HuggingFace model ID.
     ///
     /// The model must be a text/instruction model supported by mistral.rs
-    /// (e.g. Phi-3, Qwen2, Llama, Mistral).
+    /// (e.g. Gemma, Qwen2, Llama, Mistral).  Loads with F16 dtype and no ISQ —
+    /// use [`from_preset`](Self::from_preset) for optimised defaults.
     pub async fn with_model(model_id: &str) -> Result<Self> {
         let model = TextModelBuilder::new(model_id)
             .with_dtype(ModelDType::F16)
@@ -131,19 +254,24 @@ fn truncate_to_words(text: &str, max_words: usize) -> String {
     words[..max_words].join(" ")
 }
 
+// ── Standalone CLI entry-point ───────────────────────────────────────────────
+
 /// Run the prompt enhancer as a standalone example.
 ///
 /// Loads a text model, takes a seed prompt, and prints the enhanced version.
-pub async fn run(prompt: Option<String>) -> Result<()> {
+pub async fn run(prompt: Option<String>, model: Option<EnhancerModel>) -> Result<()> {
+    let preset = model.unwrap_or_default();
+
     let seed = prompt.unwrap_or_else(|| {
         "Detective Conan Main Theme, in the style of Raden Saleh, \
          trending on artstation, highly detailed"
             .to_string()
     });
 
-    println!("Loading prompt enhancer model ({DEFAULT_MODEL})...");
+    println!("Loading prompt enhancer model: {preset}");
+    println!("  Memory estimate: {}", preset.approx_memory());
     let start = Instant::now();
-    let enhancer = PromptEnhancer::new().await?;
+    let enhancer = PromptEnhancer::from_preset(preset).await?;
     let load_elapsed = start.elapsed();
     println!("Model loaded in {}", fmt_duration(load_elapsed));
 

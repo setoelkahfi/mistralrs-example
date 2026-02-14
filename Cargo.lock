@@ -3181,6 +3181,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "mistralrs-example"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cc",
+ "clap",
+ "mistralrs",
+ "tokio",
+]
+
+[[package]]
 name = "mistralrs-macros"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3258,17 +3269,6 @@ dependencies = [
  "tokio",
  "tracing",
  "yoke 0.8.1",
-]
-
-[[package]]
-name = "mistralrs-test"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "cc",
- "clap",
- "mistralrs",
- "tokio",
 ]
 
 [[package]]
