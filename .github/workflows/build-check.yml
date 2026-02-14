@@ -24,39 +24,84 @@ jobs:
         include:
           # ── macOS (native) ──────────────────────────────────
           - target: aarch64-apple-darwin
-            runner: macos-latest # Apple Silicon (M-series)
+            runner: macos-latest
             extra_rustflags: ""
+            toolchain: stable
+            build_std: false
 
-          # ── iOS (cross-compile from macOS ARM) ──────────────
+          # ── iOS (Tier 2 – cross-compile from macOS ARM) ─────
           # +fp16 is required by gemm-f16 and must match .cargo/config.toml.
           # We set RUSTFLAGS explicitly here because the env var takes
           # precedence over [target.*.rustflags] in config.toml.
           - target: aarch64-apple-ios
             runner: macos-latest
             extra_rustflags: "-C target-feature=+fp16"
+            toolchain: stable
+            build_std: false
 
           - target: aarch64-apple-ios-sim
             runner: macos-latest
             extra_rustflags: "-C target-feature=+fp16"
+            toolchain: stable
+            build_std: false
+
+          # ── tvOS (Tier 3 – nightly, build-std) ──────────────
+          - target: aarch64-apple-tvos
+            runner: macos-latest
+            extra_rustflags: "-C target-feature=+fp16"
+            toolchain: nightly
+            build_std: true
+
+          - target: aarch64-apple-tvos-sim
+            runner: macos-latest
+            extra_rustflags: "-C target-feature=+fp16"
+            toolchain: nightly
+            build_std: true
+
+          # NOTE: visionOS and watchOS targets are omitted for now due to
+          # upstream dependency issues:
+          #   - aarch64-apple-visionos{,-sim}: blocked by mio v0.8.x
+          #     (via crossterm → tqdm → mistralrs-core) lacking visionOS support.
+          #   - aarch64-apple-watchos{,-sim}: blocked by sysctl (via gemm-common
+          #     → candle-core) not supporting watchOS at all.
+          # Re-evaluate when these crates add platform support.
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
+      # Tier 2+ targets: install toolchain and pre-built target via rustup.
+      - name: Install Rust toolchain (stable)
+        if: ${{ !matrix.build_std }}
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      # Tier 3 targets: install nightly with rust-src so we can -Zbuild-std.
+      - name: Install Rust toolchain (nightly + rust-src)
+        if: ${{ matrix.build_std }}
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
 
       - name: Rust cache
         uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
 
+      # Stable / Tier 2 targets
       - name: Run cargo check
+        if: ${{ !matrix.build_std }}
         env:
           RUSTFLAGS: "-D warnings ${{ matrix.extra_rustflags }}"
         run: cargo check --target ${{ matrix.target }}
+
+      # Nightly / Tier 3 targets (build std from source)
+      - name: Run cargo check (-Zbuild-std)
+        if: ${{ matrix.build_std }}
+        env:
+          RUSTFLAGS: "-D warnings ${{ matrix.extra_rustflags }}"
+        run: cargo check --target ${{ matrix.target }} -Zbuild-std
 
   # ── Summary gate (single required status check) ─────────────
   build-check-ok:
