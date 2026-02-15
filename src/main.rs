@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 mod audio_transcription;
+mod cli_chat;
 mod image_generation;
 mod promp_enhancer;
 
@@ -109,6 +110,24 @@ enum Command {
         #[arg(short, long)]
         user_prompt: Option<String>,
     },
+
+    /// Start an interactive CLI chat with the same model presets used by
+    /// the prompt enhancer.
+    ///
+    /// Examples:
+    ///   cargo run -- chat
+    ///   cargo run -- chat --model gemma-e2b
+    ///   cargo run -- chat --model phi-3.5-mini
+    Chat {
+        /// Which chat model preset to use.
+        ///
+        /// Possible values:
+        ///   gemma-e2b    — Gemma 3n E2B, smallest (~1.5 GB Q4K), best for iPhone
+        ///   gemma-e4b    — Gemma 3n E4B, balanced (~8 GB F16) [default]
+        ///   phi-3.5-mini — Phi-3.5-mini, strongest quality (~2.8 GB Q4K)
+        #[arg(short, long, value_enum)]
+        model: Option<EnhancerModel>,
+    },
 }
 
 #[tokio::main]
@@ -127,5 +146,6 @@ async fn main() -> Result<()> {
             model,
             user_prompt,
         } => audio_transcription::run(audio_path, model, user_prompt).await,
+        Command::Chat { model } => cli_chat::run(model).await,
     }
 }
