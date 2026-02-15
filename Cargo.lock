@@ -3067,7 +3067,6 @@ dependencies = [
 [[package]]
 name = "mistralrs"
 version = "0.7.1-alpha.1"
-source = "git+https://github.com/setoelkahfi/mistral.rs.git?branch=feat%2Ftvos-metal-support#4ace77892aee68005eb14e76a7ecd60269156e0b"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -3093,7 +3092,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-audio"
 version = "0.7.1-alpha.1"
-source = "git+https://github.com/setoelkahfi/mistral.rs.git?branch=feat%2Ftvos-metal-support#4ace77892aee68005eb14e76a7ecd60269156e0b"
 dependencies = [
  "anyhow",
  "apodize",
@@ -3104,7 +3102,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-core"
 version = "0.7.1-alpha.1"
-source = "git+https://github.com/setoelkahfi/mistral.rs.git?branch=feat%2Ftvos-metal-support#4ace77892aee68005eb14e76a7ecd60269156e0b"
 dependencies = [
  "ahash",
  "akin",
@@ -3213,7 +3210,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-macros"
 version = "0.7.1-alpha.1"
-source = "git+https://github.com/setoelkahfi/mistral.rs.git?branch=feat%2Ftvos-metal-support#4ace77892aee68005eb14e76a7ecd60269156e0b"
 dependencies = [
  "darling 0.23.0",
  "proc-macro2",
@@ -3224,7 +3220,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-mcp"
 version = "0.7.1-alpha.1"
-source = "git+https://github.com/setoelkahfi/mistral.rs.git?branch=feat%2Ftvos-metal-support#4ace77892aee68005eb14e76a7ecd60269156e0b"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3244,7 +3239,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-paged-attn"
 version = "0.7.1-alpha.1"
-source = "git+https://github.com/setoelkahfi/mistral.rs.git?branch=feat%2Ftvos-metal-support#4ace77892aee68005eb14e76a7ecd60269156e0b"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -3260,7 +3254,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-quant"
 version = "0.7.1-alpha.1"
-source = "git+https://github.com/setoelkahfi/mistral.rs.git?branch=feat%2Ftvos-metal-support#4ace77892aee68005eb14e76a7ecd60269156e0b"
 dependencies = [
  "byteorder",
  "candle-core",
@@ -3289,7 +3282,6 @@ dependencies = [
 [[package]]
 name = "mistralrs-vision"
 version = "0.7.1-alpha.1"
-source = "git+https://github.com/setoelkahfi/mistral.rs.git?branch=feat%2Ftvos-metal-support#4ace77892aee68005eb14e76a7ecd60269156e0b"
 dependencies = [
  "candle-core",
  "image",

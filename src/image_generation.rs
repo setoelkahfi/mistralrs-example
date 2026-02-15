@@ -90,7 +90,7 @@ pub async fn run(
     let response = model
         .generate_image(
             &prompt,
-            ImageGenerationResponseFormat::Url,
+            ImageGenerationResponseFormat::Url { path: None },
             DiffusionGenerationParams::default(),
         )
         .await?;

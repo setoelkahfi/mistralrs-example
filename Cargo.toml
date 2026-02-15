@@ -6,12 +6,12 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 clap = { version = "4", features = ["derive"] }
-mistralrs = { git = "https://github.com/setoelkahfi/mistral.rs.git", branch = "feat/tvos-metal-support" }
+mistralrs = { path = "../../Repositories/mistral.rs/mistralrs" }
 tokio = "1.49.0"
 
 # Enable Metal (Apple GPU) on all Apple platforms that support it.
 [target.'cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos"))'.dependencies]
-mistralrs = { git = "https://github.com/setoelkahfi/mistral.rs.git", branch = "feat/tvos-metal-support", features = ["metal"] }
+mistralrs = { path = "../../Repositories/mistral.rs/mistralrs", features = ["metal"] }
 
 # Enable CUDA on Linux (activate by building with --features cuda).
 [features]
