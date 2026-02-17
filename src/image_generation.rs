@@ -90,8 +90,9 @@ pub async fn run(
     let response = model
         .generate_image(
             &prompt,
-            ImageGenerationResponseFormat::Url { path: None },
+            ImageGenerationResponseFormat::Url,
             DiffusionGenerationParams::default(),
+            None,
         )
         .await?;
     let elapsed = start.elapsed();

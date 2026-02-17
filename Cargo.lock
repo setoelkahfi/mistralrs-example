@@ -3067,6 +3067,7 @@ dependencies = [
 [[package]]
 name = "mistralrs"
 version = "0.7.1-alpha.1"
+source = "git+https://github.com/setoelkahfi/mistral.rs#70a7014429e37aadd8e5a048b7a6ebaa75c19702"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -3092,6 +3093,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-audio"
 version = "0.7.1-alpha.1"
+source = "git+https://github.com/setoelkahfi/mistral.rs#70a7014429e37aadd8e5a048b7a6ebaa75c19702"
 dependencies = [
  "anyhow",
  "apodize",
@@ -3102,6 +3104,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-core"
 version = "0.7.1-alpha.1"
+source = "git+https://github.com/setoelkahfi/mistral.rs#70a7014429e37aadd8e5a048b7a6ebaa75c19702"
 dependencies = [
  "ahash",
  "akin",
@@ -3210,6 +3213,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-macros"
 version = "0.7.1-alpha.1"
+source = "git+https://github.com/setoelkahfi/mistral.rs#70a7014429e37aadd8e5a048b7a6ebaa75c19702"
 dependencies = [
  "darling 0.23.0",
  "proc-macro2",
@@ -3220,6 +3224,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-mcp"
 version = "0.7.1-alpha.1"
+source = "git+https://github.com/setoelkahfi/mistral.rs#70a7014429e37aadd8e5a048b7a6ebaa75c19702"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3239,6 +3244,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-paged-attn"
 version = "0.7.1-alpha.1"
+source = "git+https://github.com/setoelkahfi/mistral.rs#70a7014429e37aadd8e5a048b7a6ebaa75c19702"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -3254,6 +3260,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-quant"
 version = "0.7.1-alpha.1"
+source = "git+https://github.com/setoelkahfi/mistral.rs#70a7014429e37aadd8e5a048b7a6ebaa75c19702"
 dependencies = [
  "byteorder",
  "candle-core",
@@ -3282,6 +3289,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-vision"
 version = "0.7.1-alpha.1"
+source = "git+https://github.com/setoelkahfi/mistral.rs#70a7014429e37aadd8e5a048b7a6ebaa75c19702"
 dependencies = [
  "candle-core",
  "image",
